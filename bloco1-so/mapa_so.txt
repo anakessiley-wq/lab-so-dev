@@ -190,3 +190,5 @@ local.d               sasl2
 
 Resposta:
    /dev
+[root@localhost ~]# /dev
+sh: /dev: Is a directory
