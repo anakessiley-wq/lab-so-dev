@@ -46,20 +46,20 @@ root        78  0.0  0.0      0     0 ?        I    08:21   0:00 [kworker/u2:1]
 # Cole a saída dos comandos e responda:
 
 sleep 5m &
-  PID do filho: [1] 101
+  PID do filho: 101
 
 cat /proc/[FILHO]/status | grep -E "Pid|PPid|State"
  [root@localhost ~]# cat /proc/[1] 101/status
 cat: /proc/1: Is a directory
 
 ps -o pid,ppid,stat,cmd (antes do kill)
-  pid: 1
-ppid: 0
+  pid: 47 101
+ppid: 1 47
 stat: s
-cmd: ...
+cmd: sh -l  sleep 5m
 
 ps -o pid,ppid,stat,cmd (depois do kill)
-  
+  pid: 47 101 ppid: 1 47 stat: Ss Z CMD: sh -l [sleep] 
 
 # PARTE C — Questões de síntese
 
@@ -68,7 +68,9 @@ ps -o pid,ppid,stat,cmd (depois do kill)
 #    O que esse encadeamento sugere sobre como os processos sao
 #    criados no Linux?
 
-Resposta 1:
+Resposta 1: O encadeamento gerado pelos comandos (init (1) -> sh (47) -> sleep (101)) confirma que a criação de processos no Linux é estritamente hierárquica e em árvore.
+
+Nenhum processo surge de forma isolada. Exceto pelo processo primordial do sistema (init/systemd, PID 1), todo processo nasce a partir de um processo pai já existente através do mecanismo de clonagem e substituição (fork e exec). O shell (47) é filho do sistema operacional/terminal, e qualquer comando que você executa dentro dele (como o sleep) se torna seu filho direto, herdando suas propriedades e permissões.
 
 
 # 2. O arquivo /proc/<PID>/status mostra o campo State com uma letra
@@ -76,4 +78,6 @@ Resposta 1:
 #    o que aconteceu com o processo filho? O que isso te faz pensar  
 #    sobre a vida de um processo?
 
-Resposta 2:
+Resposta 2:Após o comando kill, o processo filho entrou no estado Zombie (Z), tornando-se um processo defunto (<defunct>).
+
+Isso nos mostra que o ciclo de vida de um processo no Linux não termina de forma abrupta ou independente. Quando um processo morre, ele libera seus recursos de memória, mas a sua "lapide" (sua entrada na tabela de processos com seu PID e o status de saída) permanece no sistema. Ele só desaparecerá por completo quando o processo pai (neste caso, o seu shell 47) tomar conhecimento de sua morte através de uma chamada de sistema (como wait()). A vida de um processo, portanto, depende de um vínculo de responsabilidade parental até o seu último segundo.
